@@ -16,6 +16,8 @@ module.exports = {
       }
     }
     const playOrder = sourceExist.sort((a, b) => (parseInt(a[1].slice(a[1].indexOf(':') + 1), 10)) - (parseInt(b[1].slice(b[1].indexOf(':') + 1), 10)));
+    // console.log('playOrder');
+    // console.log(playOrder);
     let n = 0;
     let elm = {};
     for (let i = 0; i < playOrder.length; i += 1) { // x, y, userIdを生成する
@@ -27,9 +29,7 @@ module.exports = {
         userId = Number(userId);
       }
 
-      const status = playOrder[i][2];
       elm = {
-        status,
         piece: {
           x,
           y,

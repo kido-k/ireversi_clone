@@ -6,6 +6,7 @@ const array2Matchers = require('../../../../../src/utils/array2Matchers.js');
 const app = require('../../../../../src/routes/app.js');
 const BoardHistoryModel = require('../../../../../src/models/v2/BoardHistoryModel.js');
 const storePlayHistory = require('../../../../../src/utils/storePlayHistory');
+const testUtil = require('../../../../../src/utils/testUtil');
 
 const sendMongo = require('../../../../../src/utils/sendMongo.js');
 
@@ -20,6 +21,11 @@ const generateToken = require('../../../../../src/routes/api/v2/userIdGenerate/g
 const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
 const basePath = '/api/v2/piece/';
 const propFilter = '-_id -__v';
+
+// const u = n => jwt.decode(testUsers[n]).userId;
+
+const ZERO00 = 0;
+const CENTER = 0;
 
 function genJwtArr(number) {
   const jwtIds = [];
@@ -66,6 +72,15 @@ describe('piece', () => {
           0, 0, 0,
         ],
       );
+      const testPieces = await testUtil.setTesPieces2(
+        [
+          ZERO00, ZERO00, ZERO00, [ZERO00, ZERO00], ZERO00,
+          ZERO00, ZERO00, CENTER, [ZERO00, ZERO00], ZERO00,
+          ZERO00, ZERO00, 'u0:1', ['u1:2', 'u2:3'], 'u0:4',
+        ],
+      );
+
+      console.log(testPieces);
 
       const matches = array2Matchers.array2Matchers(
         [
@@ -88,6 +103,11 @@ describe('piece', () => {
           .set('content-type', 'application/x-www-form-urlencoded')
           .set('Authorization', jwtIds[index].jwtId)
           .send(pieces[i].piece);
+        // console.log('moto');
+        // console.log(jwtIds[index].jwtId);
+        // console.log(pieces[i].piece);
+        // console.log(response.body);
+
 
         // Then
         expect(response.body).toEqual(match);
@@ -114,298 +134,298 @@ describe('piece', () => {
 
 
   // 初期値があるから1を他の場所に置けない、離れたところに置けないテスト
-  it('is put', async () => {
-    // Reset
-    await chai.request(app).delete(`${basePath}`);
-    PieceStore.deletePieces();
-    storePlayHistory.deleteStandbySendMongo();
+  //   it('is put', async () => {
+  //     // Reset
+  //     await chai.request(app).delete(`${basePath}`);
+  //     PieceStore.deletePieces();
+  //     storePlayHistory.deleteStandbySendMongo();
 
-    const jwtIds = genJwtArr(2);
+  //     const jwtIds = genJwtArr(2);
 
-    // Given
-    const pieces = array2Pieces.array2Pieces(
-      [
-        `${jwtIds[0].decode}:1`, `${jwtIds[1].decode}:2`,
-        0, `${jwtIds[0].decode}:3`,
-      ],
-    );
+  //     // Given
+  //     const pieces = array2Pieces.array2Pieces(
+  //       [
+  //         `${jwtIds[0].decode}:1`, `${jwtIds[1].decode}:2`,
+  //         0, `${jwtIds[0].decode}:3`,
+  //       ],
+  //     );
 
-    const matches = array2Matchers.array2Matchers(
-      [
-        `${jwtIds[0].decode}:1`, `${jwtIds[1].decode}:2`,
-        0, `${jwtIds[0].decode}:3:f`,
-      ],
-    );
+  //     const matches = array2Matchers.array2Matchers(
+  //       [
+  //         `${jwtIds[0].decode}:1`, `${jwtIds[1].decode}:2`,
+  //         0, `${jwtIds[0].decode}:3:f`,
+  //       ],
+  //     );
 
-    // When
-    let response;
-    for (let i = 0; i < pieces.length; i += 1) {
-      const match = matches[i];
-      const index = searchIndex(jwtIds, pieces[i].piece.userId);
-      response = await chai.request(app)
-        .post(`${basePath}`)
-        .set('content-type', 'application/x-www-form-urlencoded')
-        .set('Authorization', jwtIds[index].jwtId)
-        .send(pieces[i].piece);
+  //     // When
+  //     let response;
+  //     for (let i = 0; i < pieces.length; i += 1) {
+  //       const match = matches[i];
+  //       const index = searchIndex(jwtIds, pieces[i].piece.userId);
+  //       response = await chai.request(app)
+  //         .post(`${basePath}`)
+  //         .set('content-type', 'application/x-www-form-urlencoded')
+  //         .set('Authorization', jwtIds[index].jwtId)
+  //         .send(pieces[i].piece);
 
-      // Then
-      expect(response.body).toEqual(match);
-      expect(response.body).toEqual(expect.objectContaining({
-        status: match.status,
-        piece: {
-          x: match.piece.x,
-          y: match.piece.y,
-          userId: match.piece.userId,
-        },
-      }));
-    }
-  });
+  //       // Then
+  //       expect(response.body).toEqual(match);
+  //       expect(response.body).toEqual(expect.objectContaining({
+  //         status: match.status,
+  //         piece: {
+  //           x: match.piece.x,
+  //           y: match.piece.y,
+  //           userId: match.piece.userId,
+  //         },
+  //       }));
+  //     }
+  //   });
 
-  // 離れたところは置けない1
-  it('never become alone (far away from the other pieces)', async () => {
-    // Reset
-    await chai.request(app).delete(`${basePath}`);
-    PieceStore.deletePieces();
-    storePlayHistory.deleteStandbySendMongo();
+  //   // 離れたところは置けない1
+  //   it('never become alone (far away from the other pieces)', async () => {
+  //     // Reset
+  //     await chai.request(app).delete(`${basePath}`);
+  //     PieceStore.deletePieces();
+  //     storePlayHistory.deleteStandbySendMongo();
 
-    const jwtIds = genJwtArr(2);
+  //     const jwtIds = genJwtArr(2);
 
-    // Given
-    const pieces = array2Pieces.array2Pieces(
-      [
-        `${jwtIds[0].decode}:1`, 0, 0,
-        0, 0, `${jwtIds[1].decode}:4`,
-        0, `${jwtIds[1].decode}:3`, `${jwtIds[1].decode}:2`,
-      ],
-    );
+  //     // Given
+  //     const pieces = array2Pieces.array2Pieces(
+  //       [
+  //         `${jwtIds[0].decode}:1`, 0, 0,
+  //         0, 0, `${jwtIds[1].decode}:4`,
+  //         0, `${jwtIds[1].decode}:3`, `${jwtIds[1].decode}:2`,
+  //       ],
+  //     );
 
-    const matches = array2Matchers.array2Matchers(
-      [
-        `${jwtIds[0].decode}:1:f`, 0, 0,
-        0, 0, `${jwtIds[1].decode}:4:f`,
-        0, `${jwtIds[1].decode}:3`, `${jwtIds[1].decode}:2:f`,
-      ],
-    );
+  //     const matches = array2Matchers.array2Matchers(
+  //       [
+  //         `${jwtIds[0].decode}:1:f`, 0, 0,
+  //         0, 0, `${jwtIds[1].decode}:4:f`,
+  //         0, `${jwtIds[1].decode}:3`, `${jwtIds[1].decode}:2:f`,
+  //       ],
+  //     );
 
-    // When
-    let response;
-    for (let i = 0; i < pieces.length; i += 1) {
-      const match = matches[i];
-      const index = searchIndex(jwtIds, pieces[i].piece.userId);
-      response = await chai.request(app)
-        .post(`${basePath}`)
-        .set('content-type', 'application/x-www-form-urlencoded')
-        .set('Authorization', jwtIds[index].jwtId)
-        .send(pieces[i].piece);
-      // Then
-      expect(response.body).toEqual(match);
-      expect(response.body).toEqual(expect.objectContaining({
-        status: match.status,
-        piece: {
-          x: match.piece.x,
-          y: match.piece.y,
-          userId: match.piece.userId,
-        },
-      }));
-    }
-  });
+  //     // When
+  //     let response;
+  //     for (let i = 0; i < pieces.length; i += 1) {
+  //       const match = matches[i];
+  //       const index = searchIndex(jwtIds, pieces[i].piece.userId);
+  //       response = await chai.request(app)
+  //         .post(`${basePath}`)
+  //         .set('content-type', 'application/x-www-form-urlencoded')
+  //         .set('Authorization', jwtIds[index].jwtId)
+  //         .send(pieces[i].piece);
+  //       // Then
+  //       expect(response.body).toEqual(match);
+  //       expect(response.body).toEqual(expect.objectContaining({
+  //         status: match.status,
+  //         piece: {
+  //           x: match.piece.x,
+  //           y: match.piece.y,
+  //           userId: match.piece.userId,
+  //         },
+  //       }));
+  //     }
+  //   });
 
-  // 離れたところは置けない2
-  it('never become alone (far away from the other pieces)2', async () => {
-    // Reset
-    await chai.request(app).delete(`${basePath}`);
-    PieceStore.deletePieces();
-    storePlayHistory.deleteStandbySendMongo();
+  //   // 離れたところは置けない2
+  //   it('never become alone (far away from the other pieces)2', async () => {
+  //     // Reset
+  //     await chai.request(app).delete(`${basePath}`);
+  //     PieceStore.deletePieces();
+  //     storePlayHistory.deleteStandbySendMongo();
 
-    const jwtIds = genJwtArr(2);
+  //     const jwtIds = genJwtArr(2);
 
-    // Given
-    const pieces = array2Pieces.array2Pieces(
-      [
-        `${jwtIds[0].decode}:1`, 0, `${jwtIds[1].decode}:2`,
-        0, 0, 0,
-        0, 0, `${jwtIds[1].decode}:3`,
-      ],
-    );
+  //     // Given
+  //     const pieces = array2Pieces.array2Pieces(
+  //       [
+  //         `${jwtIds[0].decode}:1`, 0, `${jwtIds[1].decode}:2`,
+  //         0, 0, 0,
+  //         0, 0, `${jwtIds[1].decode}:3`,
+  //       ],
+  //     );
 
-    const matches = array2Matchers.array2Matchers(
-      [
-        `${jwtIds[0].decode}:1:f`, 0, `${jwtIds[1].decode}:2:f`,
-        0, 0, 0,
-        0, 0, `${jwtIds[1].decode}:3:f`,
-      ],
-    );
+  //     const matches = array2Matchers.array2Matchers(
+  //       [
+  //         `${jwtIds[0].decode}:1:f`, 0, `${jwtIds[1].decode}:2:f`,
+  //         0, 0, 0,
+  //         0, 0, `${jwtIds[1].decode}:3:f`,
+  //       ],
+  //     );
 
-    // When
-    let response;
-    for (let i = 0; i < pieces.length; i += 1) {
-      const match = matches[i];
-      const index = searchIndex(jwtIds, pieces[i].piece.userId);
-      response = await chai.request(app)
-        .post(`${basePath}`)
-        .set('content-type', 'application/x-www-form-urlencoded')
-        .set('Authorization', jwtIds[index].jwtId)
-        .send(pieces[i].piece);
+  //     // When
+  //     let response;
+  //     for (let i = 0; i < pieces.length; i += 1) {
+  //       const match = matches[i];
+  //       const index = searchIndex(jwtIds, pieces[i].piece.userId);
+  //       response = await chai.request(app)
+  //         .post(`${basePath}`)
+  //         .set('content-type', 'application/x-www-form-urlencoded')
+  //         .set('Authorization', jwtIds[index].jwtId)
+  //         .send(pieces[i].piece);
 
-      // Then
-      expect(response.body).toEqual(match);
-      expect(response.body).toEqual(expect.objectContaining({
-        status: match.status,
-        piece: {
-          x: match.piece.x,
-          y: match.piece.y,
-          userId: match.piece.userId,
-        },
-      }));
-    }
-  });
+  //       // Then
+  //       expect(response.body).toEqual(match);
+  //       expect(response.body).toEqual(expect.objectContaining({
+  //         status: match.status,
+  //         piece: {
+  //           x: match.piece.x,
+  //           y: match.piece.y,
+  //           userId: match.piece.userId,
+  //         },
+  //       }));
+  //     }
+  //   });
 
-  // 盤面で１手目の場合、斜めに置けないテスト
-  it('can be put on cell next to the other pieces not on diagle cells', async () => {
-    // Reset
-    await chai.request(app).delete(`${basePath}`);
-    PieceStore.deletePieces();
-    storePlayHistory.deleteStandbySendMongo();
+  //   // 盤面で１手目の場合、斜めに置けないテスト
+  //   it('can be put on cell next to the other pieces not on diagle cells', async () => {
+  //     // Reset
+  //     await chai.request(app).delete(`${basePath}`);
+  //     PieceStore.deletePieces();
+  //     storePlayHistory.deleteStandbySendMongo();
 
-    const jwtIds = genJwtArr(5);
+  //     const jwtIds = genJwtArr(5);
 
-    // Given
-    const pieces = array2Pieces.array2Pieces(
-      [
-        `${jwtIds[0].decode}:5`, 0, [`${jwtIds[0].decode}:4`, `${jwtIds[4].decode}:7`],
-        `${jwtIds[2].decode}:3`, `${jwtIds[3].decode}:2`, 0,
-        0, `${jwtIds[1].decode}:1`, `${jwtIds[0].decode}:6`,
-      ],
-    );
+  //     // Given
+  //     const pieces = array2Pieces.array2Pieces(
+  //       [
+  //         `${jwtIds[0].decode}:5`, 0, [`${jwtIds[0].decode}:4`, `${jwtIds[4].decode}:7`],
+  //         `${jwtIds[2].decode}:3`, `${jwtIds[3].decode}:2`, 0,
+  //         0, `${jwtIds[1].decode}:1`, `${jwtIds[0].decode}:6`,
+  //       ],
+  //     );
 
-    const matches = array2Matchers.array2Matchers(
-      [
-        `${jwtIds[0].decode}:5`, 0, [`${jwtIds[0].decode}:4:f`, `${jwtIds[4].decode}:7:f`],
-        `${jwtIds[2].decode}:3`, `${jwtIds[3].decode}:2`, 0,
-        0, `${jwtIds[1].decode}:1`, `${jwtIds[0].decode}:6`,
-      ],
-    );
+  //     const matches = array2Matchers.array2Matchers(
+  //       [
+  //         `${jwtIds[0].decode}:5`, 0, [`${jwtIds[0].decode}:4:f`, `${jwtIds[4].decode}:7:f`],
+  //         `${jwtIds[2].decode}:3`, `${jwtIds[3].decode}:2`, 0,
+  //         0, `${jwtIds[1].decode}:1`, `${jwtIds[0].decode}:6`,
+  //       ],
+  //     );
 
-    // When
-    let response;
-    for (let i = 0; i < pieces.length; i += 1) {
-      const match = matches[i];
-      const index = searchIndex(jwtIds, pieces[i].piece.userId);
-      response = await chai.request(app)
-        .post(`${basePath}`)
-        .set('content-type', 'application/x-www-form-urlencoded')
-        .set('Authorization', jwtIds[index].jwtId)
-        .send(pieces[i].piece);
+  //     // When
+  //     let response;
+  //     for (let i = 0; i < pieces.length; i += 1) {
+  //       const match = matches[i];
+  //       const index = searchIndex(jwtIds, pieces[i].piece.userId);
+  //       response = await chai.request(app)
+  //         .post(`${basePath}`)
+  //         .set('content-type', 'application/x-www-form-urlencoded')
+  //         .set('Authorization', jwtIds[index].jwtId)
+  //         .send(pieces[i].piece);
 
-      // Then
-      expect(response.body).toEqual(match);
-      expect(response.body).toEqual(expect.objectContaining({
-        status: match.status,
-        piece: {
-          x: match.piece.x,
-          y: match.piece.y,
-          userId: match.piece.userId,
-        },
-      }));
-    }
-  });
+  //       // Then
+  //       expect(response.body).toEqual(match);
+  //       expect(response.body).toEqual(expect.objectContaining({
+  //         status: match.status,
+  //         piece: {
+  //           x: match.piece.x,
+  //           y: match.piece.y,
+  //           userId: match.piece.userId,
+  //         },
+  //       }));
+  //     }
+  //   });
 
-  // 盤面に自コマがない場合、他コマの上下左右だけおける。斜めには置けないテスト。
-  it('can be put on a cell next to the other pieces', async () => {
-    // Reset
-    await chai.request(app).delete(`${basePath}`);
-    PieceStore.deletePieces();
-    storePlayHistory.deleteStandbySendMongo();
+  //   // 盤面に自コマがない場合、他コマの上下左右だけおける。斜めには置けないテスト。
+  //   it('can be put on a cell next to the other pieces', async () => {
+  //     // Reset
+  //     await chai.request(app).delete(`${basePath}`);
+  //     PieceStore.deletePieces();
+  //     storePlayHistory.deleteStandbySendMongo();
 
-    const jwtIds = genJwtArr(3);
+  //     const jwtIds = genJwtArr(3);
 
 
-    // Given
-    const pieces = array2Pieces.array2Pieces(
-      [
-        `${jwtIds[0].decode}:1`, `${jwtIds[1].decode}:4`, 0,
-        0, [`${jwtIds[2].decode}:3`, `${jwtIds[2].decode}:5`], 0,
-        0, 0, `${jwtIds[1].decode}:2`,
-      ],
-    );
+  //     // Given
+  //     const pieces = array2Pieces.array2Pieces(
+  //       [
+  //         `${jwtIds[0].decode}:1`, `${jwtIds[1].decode}:4`, 0,
+  //         0, [`${jwtIds[2].decode}:3`, `${jwtIds[2].decode}:5`], 0,
+  //         0, 0, `${jwtIds[1].decode}:2`,
+  //       ],
+  //     );
 
-    const matches = array2Matchers.array2Matchers(
-      [
-        `${jwtIds[0].decode}:1:f`, `${jwtIds[1].decode}:4:f`, 0,
-        0, [`${jwtIds[2].decode}:3:f`, `${jwtIds[2].decode}:5:f`], 0,
-        0, 0, `${jwtIds[1].decode}:2:f`,
-      ],
-    );
+  //     const matches = array2Matchers.array2Matchers(
+  //       [
+  //         `${jwtIds[0].decode}:1:f`, `${jwtIds[1].decode}:4:f`, 0,
+  //         0, [`${jwtIds[2].decode}:3:f`, `${jwtIds[2].decode}:5:f`], 0,
+  //         0, 0, `${jwtIds[1].decode}:2:f`,
+  //       ],
+  //     );
 
-    // When
-    let response;
-    for (let i = 0; i < pieces.length; i += 1) {
-      const match = matches[i];
-      const index = searchIndex(jwtIds, pieces[i].piece.userId);
-      response = await chai.request(app)
-        .post(`${basePath}`)
-        .set('content-type', 'application/x-www-form-urlencoded')
-        .set('Authorization', jwtIds[index].jwtId)
-        .send(pieces[i].piece);
-      // Then
-      expect(response.body).toEqual(match);
-      expect(response.body).toEqual(expect.objectContaining({
-        status: match.status,
-        piece: {
-          x: match.piece.x,
-          y: match.piece.y,
-          userId: match.piece.userId,
-        },
-      }));
-    }
-  });
+  //     // When
+  //     let response;
+  //     for (let i = 0; i < pieces.length; i += 1) {
+  //       const match = matches[i];
+  //       const index = searchIndex(jwtIds, pieces[i].piece.userId);
+  //       response = await chai.request(app)
+  //         .post(`${basePath}`)
+  //         .set('content-type', 'application/x-www-form-urlencoded')
+  //         .set('Authorization', jwtIds[index].jwtId)
+  //         .send(pieces[i].piece);
+  //       // Then
+  //       expect(response.body).toEqual(match);
+  //       expect(response.body).toEqual(expect.objectContaining({
+  //         status: match.status,
+  //         piece: {
+  //           x: match.piece.x,
+  //           y: match.piece.y,
+  //           userId: match.piece.userId,
+  //         },
+  //       }));
+  //     }
+  //   });
 
-  it('can flip with defalut piece', async () => {
-    // Reset
-    await chai.request(app).delete(`${basePath}`);
-    PieceStore.deletePieces();
-    storePlayHistory.deleteStandbySendMongo();
+  //   it('can flip with defalut piece', async () => {
+  //     // Reset
+  //     await chai.request(app).delete(`${basePath}`);
+  //     PieceStore.deletePieces();
+  //     storePlayHistory.deleteStandbySendMongo();
 
-    const jwtIds = genJwtArr(4);
+  //     const jwtIds = genJwtArr(4);
 
-    // Given
-    const pieces = array2Pieces.array2Pieces(
-      [
-        0, 0, `${jwtIds[0].decode}:5`,
-        0, `${jwtIds[2].decode}:2`, `${jwtIds[3].decode}:3`,
-        0, `${jwtIds[1].decode}:1`, 0,
-      ],
-    );
+  //     // Given
+  //     const pieces = array2Pieces.array2Pieces(
+  //       [
+  //         0, 0, `${jwtIds[0].decode}:5`,
+  //         0, `${jwtIds[2].decode}:2`, `${jwtIds[3].decode}:3`,
+  //         0, `${jwtIds[1].decode}:1`, 0,
+  //       ],
+  //     );
 
-    const matches = array2Matchers.array2Matchers(
-      [
-        0, 0, `${jwtIds[0].decode}:5`,
-        0, `${jwtIds[2].decode}:2`, `${jwtIds[3].decode}:3`,
-        0, `${jwtIds[1].decode}:1`, 0,
-      ],
-    );
+  //     const matches = array2Matchers.array2Matchers(
+  //       [
+  //         0, 0, `${jwtIds[0].decode}:5`,
+  //         0, `${jwtIds[2].decode}:2`, `${jwtIds[3].decode}:3`,
+  //         0, `${jwtIds[1].decode}:1`, 0,
+  //       ],
+  //     );
 
-    // When
-    let response;
-    for (let i = 0; i < pieces.length; i += 1) {
-      const match = matches[i];
-      const index = searchIndex(jwtIds, pieces[i].piece.userId);
-      response = await chai.request(app)
-        .post(`${basePath}`)
-        .set('content-type', 'application/x-www-form-urlencoded')
-        .set('Authorization', jwtIds[index].jwtId)
-        .send(pieces[i].piece);
+  //     // When
+  //     let response;
+  //     for (let i = 0; i < pieces.length; i += 1) {
+  //       const match = matches[i];
+  //       const index = searchIndex(jwtIds, pieces[i].piece.userId);
+  //       response = await chai.request(app)
+  //         .post(`${basePath}`)
+  //         .set('content-type', 'application/x-www-form-urlencoded')
+  //         .set('Authorization', jwtIds[index].jwtId)
+  //         .send(pieces[i].piece);
 
-      // Then
-      expect(response.body).toEqual(match);
-      expect(response.body).toEqual(expect.objectContaining({
-        status: match.status,
-        piece: {
-          x: match.piece.x,
-          y: match.piece.y,
-          userId: match.piece.userId,
-        },
-      }));
-    }
-  });
+//       // Then
+//       expect(response.body).toEqual(match);
+//       expect(response.body).toEqual(expect.objectContaining({
+//         status: match.status,
+//         piece: {
+//           x: match.piece.x,
+//           y: match.piece.y,
+//           userId: match.piece.userId,
+//         },
+//       }));
+//     }
+  // });
 });

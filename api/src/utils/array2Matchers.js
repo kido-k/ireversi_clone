@@ -16,6 +16,8 @@ module.exports = {
         sourceExist.push(h);
       }
     }
+    // console.log('sourceExist');
+    // console.log(sourceExist);
     // 要素にfがあるかないかでtrueかfalseを決定
     for (let i = 0; i < sourceExist.length; i += 1) {
       const el = sourceExist[i];
@@ -30,6 +32,8 @@ module.exports = {
 
     // プレイ順に並び替え
     const playOrder = sourceExist.sort((a, b) => (parseInt(a[1].slice(a[1].indexOf(':') + 1), 10)) - (parseInt(b[1].slice(b[1].indexOf(':') + 1), 10)));
+    // console.log('playOrder');
+    // console.log(playOrder);
 
     let n = 0;
     let elm = {};
@@ -54,6 +58,8 @@ module.exports = {
       n += 1;
       array.push(elm);
     }
+    // console.log('playOrder');
+    // console.log(playOrder);
     return array;
   },
 };
